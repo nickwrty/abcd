@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сороконожка: Интерактив</title>
+    <style>
+        :root {
+            --bg: #fcf8eb; --text: #2c3e2e; --muted: #6b7c6d;
+            --p1: #d4af37; --p2: #4a6d50; --card: #ffffff;
+            --border: #e0d8c3; --red: #c0392b; --green: #27ae60;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: var(--card); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 30px; max-width: 750px; width: 100%; box-sizing: border-box;
+        }
+        h1 { margin-top: 0; text-align: center; font-size: 26px; }
+        h2 { font-size: 18px; color: var(--p2); }
+        
+        .rules-box {
+            background: var(--bg); border-left: 4px solid var(--p1); padding: 15px;
+            margin-bottom: 20px; font-size: 15px; line-height: 1.6;
+        }
+        .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .strategy-grid { grid-template-columns: 1fr; } }
+        
+        .strategy-btn {
+            padding: 12px; background: white; border: 2px solid var(--border); border-radius: 8px;
+            cursor: pointer; text-align: left; font-size: 14px; transition: 0.2s;
+        }
+        .strategy-btn:hover { border-color: var(--p1); background: #fffaf0; }
+        .strategy-btn.selected { border-color: var(--p1); background: #fffaf0; box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+
+        /* Арена */
+        #game-screen { display: none; }
+        .arena {
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative; margin: 40px 0; height: 140px; padding: 0 20px;
+        }
+        .character { text-align: center; transition: all 0.4s ease; position: relative; z-index: 2; width: 100px; }
+        .character svg { width: 70px; height: 70px; }
+        .character .name { font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .character.p1 { color: var(--p1); }
+        .character.p2 { color: var(--p2); }
+        
+        /* Мешок с деньгами */
+        .money-bag {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            font-size: 30px; background: white; padding: 10px 20px; border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: bold; color: var(--text);
+            transition: all 0.4s ease; z-index: 1;
+        }
+        .money-bag.bag-p1 { left: 15%; top: 70%; color: var(--p1); transform: translate(-50%, -50%) scale(1.2); }
+        .money-bag.bag-p2 { left: 85%; top: 70%; color: var(--p2); transform: translate(-50%, -50%) scale(1.2); }
+
+        .choices { display: flex; gap: 15px; justify-content: center; }
+        .btn-action {
+            padding: 15px 30px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px;
+            cursor: pointer; transition: 0.2s; flex: 1; color: white;
+        }
+        .btn-stop { background: var(--red); }
+        .btn-stop:hover { background: #a93226; }
+        .btn-pass { background: var(--green); }
+        .btn-pass:hover { background: #219150; }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Лог */
+        .history-log {
+            background: var(--bg); padding: 15px; border-radius: 8px; max-height: 150px;
+            overflow-y: auto; font-size: 14px; font-family: monospace; display: none; margin-top: 20px;
+        }
+        .log-line { margin-bottom: 5px; }
+
+        /* Результаты */
+        #result-screen { display: none; text-align: center; }
+        .score-board { font-size: 24px; margin: 20px 0; }
+        .math-conclusion { background: var(--bg); padding: 20px; border-radius: 8px; font-size: 16px; text-align: left; border-left: 4px solid var(--p1); margin-bottom: 20px; line-height: 1.6;}
+        .btn-restart { padding: 12px 24px; background: var(--text); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- ЭКРАН 1: ПРАВИЛА -->
+    <div id="setup-screen">
+        <h1>Практикум: Обратная индукция</h1>
+        <div class="rules-box">
+            <b>Правила «Сороконожки»:</b><br>
+            На столе лежит банк (начинаем с 2 баллов). Игроки ходят по очереди.<br>
+            • Если вы выбираете <b>«Забрать»</b> — игра заканчивается, вы получаете банк, соперник 0.<br>
+            • Если вы выбираете <b>«Передать»</b> — банк удваивается, и ход переходит сопернику.<br>
+            <i>Теория (обратная индукция) говорит: на последнем ходу выгодно забрать. Зная это, выгодно забрать уже на первом ходу.</i>
+        </div>
+
+        <h2>Выберите логику ИИ-соперника:</h2>
+        <div class="strategy-grid">
+            <button class="strategy-btn" onclick="selectStrategy('always_defect', this)">
+                👿 <b>Всегда забирает</b><br><small>Идеальный эгоист. Как только ход у него — он сразу забирает банк.</small>
+            </button>
+            <button class="strategy-btn" onclick="selectStrategy('always_coop', this)">
+                😇 <b>Всегда передает</b><br><small>Альтруист. Всегда передает ход вам, даже когда банк огромен.</small>
+            </button>
+            <button class="strategy-btn" onclick="selectStrategy('tit_for_tat', this)">
+                🔄 <b>Копирует</b><br><small>Если вы передали — он передаст. Если вы забрали в прошлый раз — он тоже заберет.</small>
+            </button>
+            <button class="strategy-btn" onclick="selectStrategy('detective', this)">
+                🕵️ <b>Детектив</b><br><small>Первый ход — передает. Дальше смотрит: если вы жадный, забирает. Если щедрый — передает.</small>
+            </button>
+        </div>
+        <button class="btn-action btn-pass" id="start-btn" style="display: none; width: 100%;" onclick="startGame()">Начать игру</button>
+    </div>
+
+    <!-- ЭКРАН 2: ИГРА -->
+    <div id="game-screen">
+        <h1>Раунд <span id="round-num">1</span></h1>
+        <div class="arena">
+            <div class="character p1" id="char-p1">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>
+                <div class="name">ВЫ</div>
+            </div>
+            <div class="money-bag" id="money-bag">🏦 <span id="bank-val">2</span></div>
+            <div class="character p2" id="char-p2">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>
+                <div class="name" id="bot-name">ИИ</div>
+            </div>
+        </div>
+
+        <div class="choices" id="choice-btns">
+            <button class="btn-action btn-stop" onclick="playRound('stop')">Забрать 🛑</button>
+            <button class="btn-action btn-pass" onclick="playRound('pass')">Передать ход ➡️</button>
+        </div>
+        <div class="history-log" id="history-log"><b>История:</b><div id="log-content"></div></div>
+    </div>
+
+    <!-- ЭКРАН 3: РЕЗУЛЬТАТЫ -->
+    <div id="result-screen">
+        <h1 id="result-title">Игра окончена!</h1>
+        <div class="score-board">Вы: <span id="score-p1" style="color: var(--p1);">0</span> | ИИ: <span id="score-p2" style="color: var(--p2);">0</span></div>
+        <div class="math-conclusion" id="math-text"></div>
+        <button class="btn-restart" onclick="location.reload()">Играть снова</button>
+    </div>
+</div>
+
+<script>
+    let currentStrategy = null;
+    let currentBank = 2;
+    let step = 1;
+    let isPlayerTurn = true;
+    let scoreP1 = 0; let scoreP2 = 0;
+    let lastP1Action = null; let lastP2Action = null;
+    let gameEnded = false;
+
+    function selectStrategy(strategy, btn) {
+        currentStrategy = strategy;
+        document.querySelectorAll('.strategy-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('start-btn').style.display = 'block';
+        document.getElementById('bot-name').innerText = "ИИ";
+    }
+
+    function startGame() {
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        document.getElementById('history-log').style.display = 'block';
+        document.getElementById('money-bag').classList.add('bag-p1'); // Изначально банк у игрока
+    }
+
+    function playRound(playerChoice) {
+        if (gameEnded) return;
+        document.getElementById('choice-btns').style.display = 'none';
+        lastP1Action = playerChoice;
+
+        const moneyBag = document.getElementById('money-bag');
+
+        if (playerChoice === 'stop') {
+            // Игрок забирает
+            moneyBag.classList.remove('bag-p1');
+            moneyBag.style.left = '15%'; moneyBag.style.top = '80%';
+            setTimeout(() => endGame("Вы забрали банк!", currentBank, 0, "Вы остановились и забрали деньги."), 500);
+            return;
+        }
+
+        // Игрок передал ход
+        moneyBag.classList.remove('bag-p1');
+        moneyBag.classList.add('bag-p2');
+        currentBank *= 2;
+        document.getElementById('bank-val').innerText = currentBank;
+        
+        // Лог
+        document.getElementById('log-content').innerHTML += `<div class="log-line">Вы: Передали ход (Банк: ${currentBank})</div>`;
+        
+        // Ход ИИ
+        setTimeout(() => {
+            let botChoice = getBotChoice();
+            lastP2Action = botChoice;
+
+            if (botChoice === 'stop') {
+                moneyBag.classList.remove('bag-p2');
+                moneyBag.style.left = '85%'; moneyBag.style.top = '80%';
+                setTimeout(() => endGame("ИИ забрал банк!", 0, currentBank, "Соперник остановил игру и забрал всё себе."), 500);
+            } else {
+                // ИИ передал
+                moneyBag.classList.remove('bag-p2');
+                moneyBag.classList.add('bag-p1');
+                currentBank *= 2;
+                document.getElementById('bank-val').innerText = currentBank;
+                document.getElementById('log-content').innerHTML += `<div class="log-line">ИИ: Передал ход (Банк: ${currentBank})</div>`;
+                
+                step++;
+                document.getElementById('round-num').innerText = step;
+                
+                // Защита от бесконечной игры
+                if (currentBank > 512) {
+                    endGame("Игра прервана!", currentBank / 2, currentBank / 2, "Достигнут лимит банка. Ничья.");
+                } else {
+                    document.getElementById('choice-btns').style.display = 'flex';
+                }
+            }
+        }, 800);
+    }
+
+    function getBotChoice() {
+        if (currentStrategy === 'always_defect') return 'stop';
+        if (currentStrategy === 'always_coop') return 'pass';
+        
+        if (currentStrategy === 'tit_for_tat') {
+            // Копирует прошлый ход игрока. На первом ходе передает.
+            if (step === 1) return 'pass';
+            return lastP1Action === 'stop' ? 'stop' : 'pass';
+        }
+
+        if (currentStrategy === 'detective') {
+            // Первый раз передает. На втором ходу проверяет.
+            if (step === 1) return 'pass';
+            if (lastP1Action === 'stop') return 'stop'; // Если игрок жадный, детектив забирает
+            return 'pass'; // Если игрок щедрый, детектив передает
+        }
+        return 'stop';
+    }
+
+    function endGame(title, p1Points, p2Points, text) {
+        gameEnded = true;
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        document.getElementById('score-p1').innerText = p1Points;
+        document.getElementById('score-p2').innerText = p2Points;
+        document.getElementById('result-title').innerText = title;
+
+        let mathText = "";
+        
+        // Генерируем правильный вывод
+        if (currentStrategy === 'always_defect') {
+            mathText = "<b>Анализ:</b> Соперник всегда забирает. По правилам обратной индукции, зная это, вы должны были забрать банк (2 балла) на самом первом ходу. Если вы передали ход, вы просто отдали деньги.";
+        } else if (currentStrategy === 'always_coop') {
+            mathText = "<b>Анализ:</b> Соперник всегда передает. Обратная индукция предсказывает, что на последнем ходу соперник заберет всё. Но так как он альтруист, вы могли тянуть до бесконечности. Логика теории здесь ломается.";
+        } else if (currentStrategy === 'tit_for_tat') {
+            mathText = "<b>Анализ:</b> Соперник копирует вас. Если вы передали — он передал. Если вы забрали — он заберет. В повторяющихся играх эта стратегия позволяет достичь максимального общего выигрыша, но вы оба должны доверять друг другу.";
+        } else if (currentStrategy === 'detective') {
+            mathText = "<b>Анализ:</b> Детектив проверял вас. Если вы жадничали (забирали), он наказывал вас. Если вы передавали ход, он вознаграждал вас. В реальной жизни люди действуют также: они мстят за предательство.";
+        }
+        
+        document.getElementById('math-text').innerHTML = text + "<br><br>" + mathText;
+    }
+</script>
+</body>
+</html>
