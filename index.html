@@ -13,7 +13,6 @@
             --bg: #fcf8eb; --text: #2c3e2e; --muted: #6b7c6d;
             --p1: #d4af37; --p2: #4a6d50; --card: #ffffff;
             --border: #e0d8c3; --red: #c0392b; --green: #27ae60;
-            --accent: #ffb347;
         }
 
         * { box-sizing: border-box; }
@@ -21,19 +20,21 @@
         body {
             font-family: 'Rubik', sans-serif; background: var(--bg); color: var(--text);
             margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; overflow: hidden; /* Скрываем скролл для паутинки */
+            min-height: 100vh; overflow: hidden;
         }
 
         h1, h2, h3 { font-family: 'Comfortaa', cursive; }
 
-        /* Главный экран с паутинкой */
+        /* Главный экран */
         #screen-start {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             background: var(--bg); z-index: 10; transition: opacity 1s;
         }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        .start-content { position: relative; z-index: 2; text-align: center; background: rgba(252, 248, 235, 0.85); padding: 40px; border-radius: 20px; backdrop-filter: blur(5px); }
+        .start-content { position: relative; z-index: 2; text-align: center; background: rgba(252, 248, 235, 0.85); padding: 40px; border-radius: 20px; backdrop-filter: blur(5px); animation: float 4s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
         .title-main { font-size: 42px; margin-bottom: 10px; color: var(--p2); text-shadow: 2px 2px 0px var(--border); }
         .subtitle { font-size: 18px; color: var(--muted); margin-bottom: 40px; }
         
@@ -45,21 +46,22 @@
         }
         .btn-main:active { transform: translateY(6px); box-shadow: 0 0 0 #2c3e2e; }
 
-        /* Остальные экраны */
+        /* Экраны */
         .screen {
             display: none; width: 100%; max-width: 850px; padding: 20px;
             text-align: center; animation: fadeIn 0.5s ease; z-index: 5; position: relative;
             max-height: 95vh; overflow-y: auto;
         }
         .screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         /* Правила */
         .rules-card {
             background: var(--card); border: 3px solid var(--p1); border-radius: 20px;
             padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: left;
-            margin-bottom: 30px;
+            margin-bottom: 30px; animation: slideInLeft 0.6s ease;
         }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         .rules-card p { font-size: 16px; line-height: 1.6; margin-bottom: 15px; }
         .highlight { background: #fff3cd; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
@@ -69,49 +71,71 @@
         .hero-card {
             background: var(--card); border: 2px solid var(--border); border-radius: 16px;
             padding: 20px; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center;
+            position: relative; overflow: hidden;
         }
-        .hero-card:hover { border-color: var(--p2); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .hero-avatar { width: 100px; height: 100px; margin-bottom: 15px; }
+        .hero-card:hover { border-color: var(--p2); transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .hero-card.defeated { opacity: 0.7; border-color: var(--green); }
+        .hero-card.defeated::after { content: '✓ Изучен'; position: absolute; top: 10px; right: 10px; background: var(--green); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+        
+        .hero-avatar { width: 100px; height: 100px; margin-bottom: 15px; animation: breathe 3s infinite alternate; }
+        @keyframes breathe { from { transform: scale(1); } to { transform: scale(1.05); } }
         .hero-name { font-size: 24px; font-weight: bold; font-family: 'Comfortaa', cursive; letter-spacing: 2px; }
         .hero-name.revealed { color: var(--p2); letter-spacing: 0; }
 
         /* Игра */
-        .game-arena { display: flex; justify-content: space-between; align-items: center; margin: 30px 0; padding: 0 20px; }
+        .game-arena { display: flex; justify-content: space-between; align-items: center; margin: 30px 0; padding: 0 20px; position: relative; }
         .fighter { text-align: center; transition: 0.3s; }
         .fighter svg { width: 80px; height: 80px; }
         .fighter.you { color: var(--p1); }
         .fighter.enemy { color: var(--p2); }
-        .bank { font-size: 32px; font-weight: bold; background: var(--card); padding: 10px 30px; border-radius: 50px; border: 2px solid var(--border); }
+        .fighter.attack-right { animation: punchRight 0.4s ease; }
+        .fighter.attack-left { animation: punchLeft 0.4s ease; }
+        .fighter.hit { animation: shake 0.4s ease; color: var(--red); }
+        
+        @keyframes punchRight { 0% { transform: translateX(0); } 50% { transform: translateX(40px); } 100% { transform: translateX(0); } }
+        @keyframes punchLeft { 0% { transform: translateX(0); } 50% { transform: translateX(-40px); } 100% { transform: translateX(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+        .bank { font-size: 32px; font-weight: bold; background: var(--card); padding: 10px 30px; border-radius: 50px; border: 2px solid var(--border); position: relative; z-index: 2; transition: 0.3s; }
+        .bank.pulse { transform: scale(1.2); background: #fff3cd; border-color: var(--p1); }
+        .flying-money { position: absolute; font-size: 40px; z-index: 10; transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1); pointer-events: none; }
+
         .actions { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
         .btn-act { padding: 15px 40px; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; color: white; transition: 0.2s; }
         .btn-stop { background: var(--red); }
         .btn-pass { background: var(--green); }
-        .btn-act:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-act:hover { transform: scale(1.05); }
+        .btn-act:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         /* Ввод */
         .input-group { margin: 20px 0; display: flex; justify-content: center; gap: 10px; }
         .input-group input {
             padding: 15px; font-size: 18px; border: 2px solid var(--border); border-radius: 8px;
-            width: 60%; outline: none; font-family: 'Rubik', sans-serif;
+            width: 60%; outline: none; font-family: 'Rubik', sans-serif; transition: 0.3s;
         }
-        .input-group input:focus { border-color: var(--p2); }
-        .result-box { display: none; background: #e8f5e9; border-left: 5px solid var(--green); padding: 20px; border-radius: 8px; margin-top: 20px; text-align: left; }
+        .input-group input:focus { border-color: var(--p2); box-shadow: 0 0 10px rgba(74,109,80,0.2); }
+        .result-box { display: none; background: #e8f5e9; border-left: 5px solid var(--green); padding: 20px; border-radius: 8px; margin-top: 20px; text-align: left; animation: fadeIn 0.5s; }
 
         /* Финальный турнир */
-        .tournament-area { position: relative; height: 400px; background: var(--card); border-radius: 20px; border: 2px dashed var(--border); margin: 20px 0; overflow: hidden; }
+        .tournament-area { position: relative; height: 350px; background: var(--card); border-radius: 20px; border: 2px dashed var(--border); margin: 20px 0; overflow: hidden; }
         .t-hero { position: absolute; text-align: center; transition: all 0.5s ease; z-index: 2; }
         .t-hero svg { width: 60px; height: 60px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
-        .t-hero .score { font-weight: bold; font-size: 20px; margin-top: 5px; color: var(--p2); background: white; border-radius: 10px; padding: 2px 8px; display: inline-block;}
-        .t-line { position: absolute; background: var(--p2); height: 4px; z-index: 1; transform-origin: 0 0; transition: opacity 0.2s; opacity: 0; }
-        .t-line.active { opacity: 1; animation: pulse 0.3s; }
-        @keyframes pulse { 0% { filter: brightness(1); } 50% { filter: brightness(2); } 100% { filter: brightness(1); } }
-
+        .t-hero .score { font-weight: bold; font-size: 20px; margin-top: 5px; color: var(--p2); background: white; border-radius: 10px; padding: 2px 8px; display: inline-block; border: 1px solid var(--border); }
+        
         .bet-box { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+
+        /* Финальная страница */
+        #screen-end {
+            text-align: center; background: var(--card); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .confetti { position: absolute; width: 10px; height: 10px; background: var(--p1); animation: fall linear forwards; z-index: 1; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+        
     </style>
 </head>
 <body>
 
-    <!-- 1. ГЛАВНОЕ МЕНЮ С ПАУТИНКОЙ -->
+    <!-- 1. ГЛАВНОЕ МЕНЮ -->
     <div id="screen-start">
         <canvas id="web-canvas"></canvas>
         <div class="start-content">
@@ -128,7 +152,7 @@
             <p>Перед вами классическая дилемма. На столе лежит <span class="highlight">банк</span> (начинаем с 2 баллов). Вы и противник ходите по очереди.</p>
             <p>🛑 Если вы выбираете <b>«Забрать»</b> — игра заканчивается, вы получаете банк, противник — 0.</p>
             <p>➡️ Если вы выбираете <b>«Передать»</b> — банк удваивается, и ход переходит противнику.</p>
-            <p><i>Игра длится ровно 3 раунда. Ваша задача: понять логику каждого персонажа и угадать его стратегию.</i></p>
+            <p style="color: var(--red); font-weight: bold;">Внимание: чтобы открыть имя персонажа и узнать его стратегию, вам нужно сыграть с ним 3 партии!</p>
         </div>
         <button class="btn-main" onclick="showScreen('screen-heroes')">Продолжить</button>
     </div>
@@ -136,92 +160,85 @@
     <!-- 3. ВЫБОР ГЕРОЯ -->
     <div id="screen-heroes" class="screen">
         <h1 class="title-main">Выберите противника</h1>
-        <p class="subtitle">Имена скрыты. Узнайте их, сыграв 3 раунда.</p>
+        <p class="subtitle">Имена скрыты. Сыграйте по 3 партии с каждым, чтобы открыть их.</p>
         <div class="heroes-grid">
-            <!-- Злыдень -->
-            <div class="hero-card" onclick="startGame('defect')">
-                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="45" fill="#e74c3c"/>
-                    <path d="M35 45 L45 45 M55 45 L65 45 M40 65 Q50 55 60 65" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                    <circle cx="40" cy="40" r="5" fill="white"/><circle cx="60" cy="40" r="5" fill="white"/>
-                </svg>
+            <div class="hero-card" id="card-defect" onclick="startGame('defect')">
+                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" fill="#e74c3c"/><path d="M35 45 L45 45 M55 45 L65 45 M40 65 Q50 55 60 65" stroke="white" stroke-width="4" stroke-linecap="round"/><circle cx="40" cy="40" r="5" fill="white"/><circle cx="60" cy="40" r="5" fill="white"/></svg>
                 <div class="hero-name" id="name-defect">????</div>
+                <div style="font-size:12px; margin-top:5px; color:var(--muted);" id="progress-defect">Партий: 0/3</div>
             </div>
-            <!-- Добряк -->
-            <div class="hero-card" onclick="startGame('coop')">
-                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="45" fill="#3498db"/>
-                    <path d="M35 45 Q40 40 45 45 M55 45 Q60 40 65 45" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-                    <path d="M40 60 Q50 75 60 60" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-                </svg>
+            <div class="hero-card" id="card-coop" onclick="startGame('coop')">
+                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" fill="#3498db"/><path d="M35 45 Q40 40 45 45 M55 45 Q60 40 65 45" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M40 60 Q50 75 60 60" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
                 <div class="hero-name" id="name-coop">????</div>
+                <div style="font-size:12px; margin-top:5px; color:var(--muted);" id="progress-coop">Партий: 0/3</div>
             </div>
-            <!-- Копир -->
-            <div class="hero-card" onclick="startGame('tat')">
-                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="45" fill="#9b59b6"/>
-                    <circle cx="40" cy="45" r="8" fill="white"/><circle cx="60" cy="45" r="8" fill="white"/>
-                    <circle cx="40" cy="45" r="3" fill="#9b59b6"/><circle cx="60" cy="45" r="3" fill="#9b59b6"/>
-                    <path d="M40 65 L60 65" stroke="white" stroke-width="4" stroke-linecap="round"/>
-                </svg>
+            <div class="hero-card" id="card-tat" onclick="startGame('tat')">
+                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" fill="#9b59b6"/><circle cx="40" cy="45" r="8" fill="white"/><circle cx="60" cy="45" r="8" fill="white"/><circle cx="40" cy="45" r="3" fill="#9b59b6"/><circle cx="60" cy="45" r="3" fill="#9b59b6"/><path d="M40 65 L60 65" stroke="white" stroke-width="4" stroke-linecap="round"/></svg>
                 <div class="hero-name" id="name-tat">????</div>
+                <div style="font-size:12px; margin-top:5px; color:var(--muted);" id="progress-tat">Партий: 0/3</div>
             </div>
-            <!-- Сыщик -->
-            <div class="hero-card" onclick="startGame('detective')">
-                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="45" fill="#f39c12"/>
-                    <path d="M30 45 L45 40 M70 45 L55 40" stroke="white" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="40" cy="48" r="4" fill="white"/><circle cx="60" cy="48" r="4" fill="white"/>
-                    <path d="M40 65 Q50 60 60 65" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-                </svg>
+            <div class="hero-card" id="card-detective" onclick="startGame('detective')">
+                <svg class="hero-avatar" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" fill="#f39c12"/><path d="M30 45 L45 40 M70 45 L55 40" stroke="white" stroke-width="3" stroke-linecap="round"/><circle cx="40" cy="48" r="4" fill="white"/><circle cx="60" cy="48" r="4" fill="white"/><path d="M40 65 Q50 60 60 65" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
                 <div class="hero-name" id="name-detective">????</div>
+                <div style="font-size:12px; margin-top:5px; color:var(--muted);" id="progress-detective">Партий: 0/3</div>
             </div>
         </div>
+        <button class="btn-main" id="btn-to-final" style="display:none; margin-top:30px;" onclick="showScreen('screen-final'); initTournamentVisual();">Перейти к финальному турниру</button>
     </div>
 
     <!-- 4. ИГРА -->
     <div id="screen-game" class="screen">
-        <h2 id="game-round">Раунд 1 / 3</h2>
+        <h2 id="game-round" style="margin-bottom:5px;">Партия 1 из 3</h2>
+        <p id="game-round-sub" style="margin-top:0; color:var(--muted);">Раунд 1</p>
+        
         <div class="game-arena">
-            <div class="fighter you">
+            <div class="fighter you" id="fighter-you">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>
                 <div>Вы</div>
             </div>
             <div class="bank" id="ui-bank">Банк: 2</div>
-            <div class="fighter enemy" id="ui-enemy">
+            <div class="fighter enemy" id="fighter-enemy">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>
                 <div id="ui-enemy-name">????</div>
             </div>
         </div>
         <div class="actions" id="ui-actions">
-            <button class="btn-act btn-stop" onclick="playTurn('stop')">Забрать</button>
-            <button class="btn-act btn-pass" onclick="playTurn('pass')">Передать ход</button>
+            <button class="btn-act btn-stop" id="btn-stop" onclick="playTurn('stop')">Забрать</button>
+            <button class="btn-act btn-pass" id="btn-pass" onclick="playTurn('pass')">Передать ход</button>
         </div>
     </div>
 
-    <!-- 5. РЕЗУЛЬТАТ И ВВОД -->
+    <!-- 5. РЕЗУЛЬТАТ ПАРТИИ -->
     <div id="screen-win" class="screen win-screen">
-        <div class="trophy">🏆</div>
-        <h1 class="title-main" id="win-title">Игра окончена!</h1>
-        <p id="win-subtitle">Имя персонажа открыто: <b id="revealed-name" style="color:var(--p2); font-size: 1.2em;"></b></p>
+        <div class="trophy" id="win-icon" style="font-size: 80px; animation: bounce 1s infinite alternate;">🏆</div>
+        <h1 class="title-main" id="win-title">Партия окончена!</h1>
+        <p id="win-subtitle"></p>
         
-        <p style="margin-top:20px;">Как вы думаете, какая у него была стратегия?</p>
-        <div class="input-group">
-            <input type="text" id="strategy-guess" placeholder="Введите ваш вариант...">
-            <button class="btn-main" style="padding: 15px 30px; font-size: 16px;" onclick="checkGuess()">Проверить</button>
+        <div id="guess-section" style="display:none; margin-top:30px;">
+            <h2>Имя открыто: <b id="revealed-name" style="color:var(--p2);"></b></h2>
+            <p>Как вы думаете, какая у него была стратегия?</p>
+            <div class="input-group">
+                <input type="text" id="strategy-guess" placeholder="Ваш вариант...">
+                <button class="btn-main" style="padding: 15px 30px; font-size: 16px;" onclick="checkGuess()">Проверить</button>
+            </div>
+            <div class="result-box" id="guess-result">
+                <h3 id="result-title">Результат</h3>
+                <p id="result-text"></p>
+                <button class="btn-main" style="margin-top: 20px;" onclick="nextHero()">Продолжить</button>
+            </div>
         </div>
         
-        <div class="result-box" id="guess-result">
-            <h3 id="result-title">Результат</h3>
-            <p id="result-text"></p>
-            <button class="btn-main" style="margin-top: 20px;" id="btn-next-hero" onclick="nextHero()">Продолжить</button>
+        <div id="next-game-section" style="display:none; margin-top:30px;">
+            <button class="btn-main" onclick="startGame(currentHero)">Играть следующую партию</button>
+            <br><br>
+            <button class="btn-act" style="background:var(--border); color:var(--text);" onclick="showScreen('screen-heroes')">Выбрать другого персонажа</button>
         </div>
     </div>
 
     <!-- 6. ФИНАЛЬНЫЙ ТУРНИР -->
     <div id="screen-final" class="screen">
         <h1 class="title-main">Финальный турнир</h1>
-        <p>Все персонажи сразятся друг с другом. Кто наберет больше всего очков?</p>
+        <p>Все персонажи сразятся друг с другом. Кто наберет больше очков?</p>
         
         <div class="tournament-area" id="tournament-visual">
             <svg id="lines-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1;"></svg>
@@ -240,62 +257,66 @@
         <div class="result-box" id="final-result" style="display: none;"></div>
     </div>
 
+    <!-- 7. ФИНАЛЬНЫЙ ЭКРАН -->
+    <div id="screen-end" class="screen">
+        <h1 class="title-main" style="font-size:48px;">Спасибо за прохождение!</h1>
+        <p class="subtitle" style="font-size: 22px;">Вы на практике увидели, как работает теория игр.</p>
+        
+        <div style="background: var(--bg); padding: 30px; border-radius: 16px; margin: 30px 0; text-align: left; font-size: 16px; line-height: 1.6;">
+            <p><b>Что вы узнали:</b></p>
+            <ul>
+                <li>Если соперник всегда предает, выгоднее всего забрать банк сразу (обратная индукция).</li>
+                <li>Если соперник готов сотрудничать, можно рискнуть и передать ход, чтобы увеличить банк.</li>
+                <li>Стратегия «Копир» (Око за око) побеждает в долгосрочной перспективе, потому что она наказывает за предательство, но прощает, если вы возвращаетесь к сотрудничеству.</li>
+                <li>В реальной жизни люди часто ведут себя не как идеальные математики, а как персонажи этой игры.</li>
+            </ul>
+        </div>
+        
+        <button class="btn-main" onclick="location.reload()">Пройти игру заново</button>
+    </div>
+
 <script>
-    // === 1. АНИМАЦИЯ ПАУТИНКИ (Главный экран) ===
+    // === 1. ПАУТИНКА (Главный экран) ===
     const canvas = document.getElementById('web-canvas');
     const ctx = canvas.getContext('2d');
     let width, height;
     let particles = [];
     
-    function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-    }
+    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize);
     resize();
 
     class Particle {
         constructor() {
-            this.x = Math.random() * width;
-            this.y = Math.random() * height;
-            this.vx = (Math.random() - 0.5) * 0.5;
-            this.vy = (Math.random() - 0.5) * 0.5;
+            this.x = Math.random() * width; this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
             this.radius = Math.random() * 2 + 1;
         }
         update() {
-            this.x += this.vx;
-            this.y += this.vy;
+            this.x += this.vx; this.y += this.vy;
             if (this.x < 0 || this.x > width) this.vx *= -1;
             if (this.y < 0 || this.y > height) this.vy *= -1;
         }
         draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#4a6d50';
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#4a6d50'; ctx.fill();
         }
     }
-
     for (let i = 0; i < 60; i++) particles.push(new Particle());
 
     function animate() {
         if(document.getElementById('screen-start').style.display === 'none') return;
-        
         ctx.clearRect(0, 0, width, height);
         particles.forEach(p => { p.update(); p.draw(); });
-        
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
-                let dx = particles[i].x - particles[j].x;
-                let dy = particles[i].y - particles[j].y;
+                let dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
                 let dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist < 150) {
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y);
                     ctx.lineTo(particles[j].x, particles[j].y);
                     ctx.strokeStyle = `rgba(74, 109, 80, ${1 - dist/150})`;
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
+                    ctx.lineWidth = 1; ctx.stroke();
                 }
             }
         }
@@ -306,79 +327,101 @@
     function startGameFlow() {
         const startScreen = document.getElementById('screen-start');
         startScreen.style.opacity = '0';
-        setTimeout(() => {
-            startScreen.style.display = 'none';
-            showScreen('screen-rules');
-        }, 800);
+        setTimeout(() => { startScreen.style.display = 'none'; showScreen('screen-rules'); }, 800);
     }
 
-    // === 2. ЛОГИКА ПЕРЕХОДОВ ===
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    // === 3. ИГРА ===
+    // === 2. ЛОГИКА ИГРЫ ===
     let currentHero = null;
     let currentBank = 2;
     let round = 1;
-    const maxRounds = 3;
+    let match = 1;
+    const matchesToWin = 3;
     let lastP1Action = null;
-    let playedHeroes = [];
-    let botHistory = [];
+    let heroProgress = { 'defect': 0, 'coop': 0, 'tat': 0, 'detective': 0 };
+    let completedHeroes = [];
 
     const heroNames = {
-        'defect': 'Злыдень',
-        'coop': 'Добряк',
-        'tat': 'Копир',
-        'detective': 'Сыщик'
+        'defect': 'Злыдень', 'coop': 'Добряк', 'tat': 'Копир', 'detective': 'Сыщик'
     };
 
     function startGame(hero) {
+        if(completedHeroes.includes(hero)) {
+            // Если уже открыт, можно играть просто так
+            if(!confirm("Вы уже открыли этого персонажа. Хотите сыграть еще раз?")) return;
+        }
+        
         currentHero = hero;
         currentBank = 2;
         round = 1;
+        match = 1;
         lastP1Action = null;
-        botHistory = [];
         
-        document.getElementById('ui-enemy-name').innerText = '????';
-        document.getElementById('ui-bank').innerText = 'Банк: ' + currentBank;
-        document.getElementById('game-round').innerText = 'Раунд 1 / 3';
-        document.getElementById('ui-actions').style.display = 'flex';
-        
+        updateGameUI();
         showScreen('screen-game');
+    }
+
+    function updateGameUI() {
+        document.getElementById('ui-enemy-name').innerText = completedHeroes.includes(currentHero) ? heroNames[currentHero] : '????';
+        document.getElementById('ui-bank').innerText = 'Банк: ' + currentBank;
+        document.getElementById('game-round').innerText = `Партия ${match} из 3`;
+        document.getElementById('game-round-sub').innerText = `Раунд ${round}`;
+        document.getElementById('ui-actions').style.display = 'flex';
+        document.getElementById('btn-stop').disabled = false;
+        document.getElementById('btn-pass').disabled = false;
     }
 
     function playTurn(playerChoice) {
         lastP1Action = playerChoice;
         document.getElementById('ui-actions').style.display = 'none';
+        
+        const fYou = document.getElementById('fighter-you');
+        const fEnemy = document.getElementById('fighter-enemy');
+        const bankEl = document.getElementById('ui-bank');
 
         if (playerChoice === 'stop') {
-            endGame("Вы забрали банк!", "Вы остановились.");
+            fYou.classList.add('attack-right');
+            setTimeout(() => fEnemy.classList.add('hit'), 200);
+            setTimeout(() => {
+                fYou.classList.remove('attack-right');
+                fEnemy.classList.remove('hit');
+                endGame("Вы забрали банк!", "Вы остановились и забрали " + currentBank + " баллов.");
+            }, 600);
             return;
         }
 
         // Игрок передал
+        bankEl.classList.add('pulse');
         currentBank *= 2;
-        document.getElementById('ui-bank').innerText = 'Банк: ' + currentBank;
+        bankEl.innerText = 'Банк: ' + currentBank;
+        setTimeout(() => bankEl.classList.remove('pulse'), 300);
 
         setTimeout(() => {
             let botChoice = getBotChoice();
-            botHistory.push(botChoice);
 
             if (botChoice === 'stop') {
-                endGame("Противник забрал банк!", "Соперник остановился.");
+                fEnemy.classList.add('attack-left');
+                setTimeout(() => fYou.classList.add('hit'), 200);
+                setTimeout(() => {
+                    fEnemy.classList.remove('attack-left');
+                    fYou.classList.remove('hit');
+                    endGame("Противник забрал банк!", "Соперник остановился и забрал " + currentBank + " баллов.");
+                }, 600);
             } else {
+                bankEl.classList.add('pulse');
                 currentBank *= 2;
-                document.getElementById('ui-bank').innerText = 'Банк: ' + currentBank;
-                round++;
+                bankEl.innerText = 'Банк: ' + currentBank;
+                setTimeout(() => bankEl.classList.remove('pulse'), 300);
                 
-                if (round > maxRounds) {
-                    endGame("Игра окончена!", "Вы сыграли 3 раунда.");
-                } else {
-                    document.getElementById('game-round').innerText = 'Раунд ' + round + ' / 3';
+                round++;
+                setTimeout(() => {
+                    document.getElementById('game-round-sub').innerText = `Раунд ${round}`;
                     document.getElementById('ui-actions').style.display = 'flex';
-                }
+                }, 500);
             }
         }, 800);
     }
@@ -386,7 +429,6 @@
     function getBotChoice() {
         if (currentHero === 'defect') return 'stop';
         if (currentHero === 'coop') return 'pass';
-        
         if (currentHero === 'tat') {
             if (round === 1) return 'pass';
             return lastP1Action === 'stop' ? 'stop' : 'pass';
@@ -402,23 +444,53 @@
     function endGame(title, subtitle) {
         showScreen('screen-win');
         document.getElementById('win-title').innerText = title;
-        document.getElementById('win-subtitle').innerHTML = subtitle + "<br>Имя персонажа открыто: <b id='revealed-name' style='color:var(--p2); font-size: 1.2em;'>" + heroNames[currentHero] + "</b>";
-        document.getElementById('strategy-guess').value = '';
-        document.getElementById('guess-result').style.display = 'none';
+        document.getElementById('win-subtitle').innerText = subtitle;
         
-        // Открываем имя в меню
-        let nameEl = document.getElementById('name-' + currentHero);
-        nameEl.innerText = heroNames[currentHero];
-        nameEl.classList.add('revealed');
+        let isRevealed = completedHeroes.includes(currentHero);
+        
+        if (isRevealed) {
+            // Уже открыт, просто предлагаем следующую игру
+            document.getElementById('guess-section').style.display = 'none';
+            document.getElementById('next-game-section').style.display = 'block';
+            document.querySelector('#next-game-section button').onclick = () => startGame(currentHero);
+            document.getElementById('win-icon').innerText = "🔄";
+        } else {
+            heroProgress[currentHero]++;
+            document.getElementById('progress-' + currentHero).innerText = `Партий: ${heroProgress[currentHero]}/3`;
+            
+            if (heroProgress[currentHero] < 3) {
+                // Еще не 3 партии
+                document.getElementById('guess-section').style.display = 'none';
+                document.getElementById('next-game-section').style.display = 'block';
+                document.querySelector('#next-game-section button').onclick = () => { match++; startGame(currentHero); };
+                document.getElementById('win-icon').innerText = "⚔️";
+            } else {
+                // Сыграли 3 партии!
+                completedHeroes.push(currentHero);
+                document.getElementById('guess-section').style.display = 'block';
+                document.getElementById('next-game-section').style.display = 'none';
+                document.getElementById('revealed-name').innerText = heroNames[currentHero];
+                document.getElementById('strategy-guess').value = '';
+                document.getElementById('strategy-guess').disabled = false;
+                document.getElementById('guess-result').style.display = 'none';
+                document.getElementById('win-icon').innerText = "🏆";
 
-        if(!playedHeroes.includes(currentHero)) playedHeroes.push(currentHero);
+                // Открываем в меню
+                let nameEl = document.getElementById('name-' + currentHero);
+                nameEl.innerText = heroNames[currentHero];
+                nameEl.classList.add('revealed');
+                document.getElementById('card-' + currentHero).classList.add('defeated');
+
+                if (completedHeroes.length === 4) {
+                    document.getElementById('btn-to-final').style.display = 'block';
+                }
+            }
+        }
     }
 
-    // === 4. ВВОД И ОБЪЯСНЕНИЕ ===
     function checkGuess() {
         let input = document.getElementById('strategy-guess').value.toLowerCase();
         let isCorrect = false;
-
         if (currentHero === 'defect' && (input.includes('преда') || input.includes('забира') || input.includes('эгои'))) isCorrect = true;
         if (currentHero === 'coop' && (input.includes('сотруд') || input.includes('переда') || input.includes('добр'))) isCorrect = true;
         if (currentHero === 'tat' && (input.includes('копир') || input.includes('так же') || input.includes('око за око'))) isCorrect = true;
@@ -429,11 +501,6 @@
         
         let title = document.getElementById('result-title');
         let text = document.getElementById('result-text');
-        let btn = document.getElementById('btn-next-hero');
-
-        if (playedHeroes.length === 4) {
-            btn.innerText = "Перейти к финальному турниру";
-        }
 
         if (isCorrect) {
             title.innerText = "✅ Верно!";
@@ -444,31 +511,23 @@
         }
 
         let explanation = "";
-        if (currentHero === 'defect') {
-            explanation = "Этот персонаж — <b>Злыдень (Всегда предает)</b>. Как только ход переходит к нему, он забирает банк. Чтобы получить выгоду, вам следовало забрать банк на первом же ходу.";
-        } else if (currentHero === 'coop') {
-            explanation = "Этот персонаж — <b>Добряк (Всегда сотрудничает)</b>. Он всегда передает ход. Вы могли бы забрать весь банк в любой момент.";
-        } else if (currentHero === 'tat') {
-            explanation = "Этот персонаж — <b>Копир (Tit-for-Tat)</b>. Если вы передаете ход, он тоже передает. Если забираете — он забирает в следующем раунде.";
-        } else if (currentHero === 'detective') {
-            explanation = "Этот персонаж — <b>Сыщик (Детектив)</b>. Он дает вам шанс, но если вы предадите — накажет.";
-        }
+        if (currentHero === 'defect') explanation = "Этот персонаж — <b>Злыдень (Всегда предает)</b>. Как только ход переходит к нему, он забирает банк. Чтобы получить выгоду, вам следовало забрать банк на первом же ходу.";
+        if (currentHero === 'coop') explanation = "Этот персонаж — <b>Добряк (Всегда сотрудничает)</b>. Он всегда передает ход. Вы могли бы забрать весь банк в любой момент.";
+        if (currentHero === 'tat') explanation = "Этот персонаж — <b>Копир (Tit-for-Tat)</b>. Если вы передаете ход, он тоже передает. Если забираете — он забирает в следующем раунде.";
+        if (currentHero === 'detective') explanation = "Этот персонаж — <b>Сыщик (Детектив)</b>. Он дает вам шанс, но если вы предадите — накажет.";
 
         text.innerHTML = explanation;
         document.getElementById('strategy-guess').disabled = true;
     }
 
     function nextHero() {
-        if (playedHeroes.length === 4) {
-            showScreen('screen-final');
-            initTournamentVisual();
-        } else {
-            showScreen('screen-heroes');
-            document.getElementById('strategy-guess').disabled = false;
+        showScreen('screen-heroes');
+        if (completedHeroes.length === 4) {
+            document.getElementById('btn-to-final').style.display = 'block';
         }
     }
 
-    // === 5. ФИНАЛЬНЫЙ ТУРНИР ===
+    // === 3. ТУРНИР ===
     const positions = [
         {x: 20, y: 20, id: 'defect', color: '#e74c3c'},
         {x: 80, y: 20, id: 'coop', color: '#3498db'},
@@ -479,18 +538,11 @@
     function initTournamentVisual() {
         const visual = document.getElementById('tournament-visual');
         visual.innerHTML = '<svg id="lines-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1;"></svg>';
-        
         positions.forEach(pos => {
             let div = document.createElement('div');
             div.className = 't-hero';
-            div.style.left = pos.x + '%';
-            div.style.top = pos.y + '%';
-            div.style.transform = 'translate(-50%, -50%)';
-            div.innerHTML = `
-                <svg viewBox="0 0 100 100" style="fill: ${pos.color};"><circle cx="50" cy="50" r="45"/></svg>
-                <div style="font-size:12px; font-weight:bold;">${heroNames[pos.id]}</div>
-                <div class="score" id="score-${pos.id}">0</div>
-            `;
+            div.style.left = pos.x + '%'; div.style.top = pos.y + '%'; div.style.transform = 'translate(-50%, -50%)';
+            div.innerHTML = `<svg viewBox="0 0 100 100" style="fill: ${pos.color};"><circle cx="50" cy="50" r="45"/></svg><div style="font-size:12px; font-weight:bold;">${heroNames[pos.id]}</div><div class="score" id="score-${pos.id}">0</div>`;
             visual.appendChild(div);
         });
     }
@@ -498,86 +550,59 @@
     function startTournament(betId) {
         document.getElementById('bet-box').style.display = 'none';
         const linesSvg = document.getElementById('lines-svg');
-        
-        // Симуляция: Копир побеждает
         let finalScores = { 'defect': 5, 'coop': 2, 'tat': 12, 'detective': 8 };
-        let events = [
-            {a: 'defect', b: 'coop', sa: 1, sb: 0},
-            {a: 'tat', b: 'detective', sa: 1, sb: 1},
-            {a: 'defect', b: 'tat', sa: 0, sb: 1},
-            {a: 'coop', b: 'detective', sa: 0, sb: 1},
-            {a: 'tat', b: 'coop', sa: 1, sb: 0},
-            {a: 'defect', b: 'detective', sa: 0, sb: 1}
-        ];
-
+        let events = [ {a: 'defect', b: 'coop', sa: 1, sb: 0}, {a: 'tat', b: 'detective', sa: 1, sb: 1}, {a: 'defect', b: 'tat', sa: 0, sb: 1}, {a: 'coop', b: 'detective', sa: 0, sb: 1}, {a: 'tat', b: 'coop', sa: 1, sb: 0}, {a: 'defect', b: 'detective', sa: 0, sb: 1} ];
         let currentEvent = 0;
         
         function playNext() {
-            if (currentEvent >= events.length) {
-                showTournamentResult(betId, finalScores);
-                return;
-            }
-
+            if (currentEvent >= events.length) { showTournamentResult(betId); return; }
             let ev = events[currentEvent];
             let posA = positions.find(p => p.id === ev.a);
             let posB = positions.find(p => p.id === ev.b);
-            
-            // Рисуем линию
             let x1 = (posA.x / 100) * document.getElementById('tournament-visual').clientWidth;
             let y1 = (posA.y / 100) * document.getElementById('tournament-visual').clientHeight;
             let x2 = (posB.x / 100) * document.getElementById('tournament-visual').clientWidth;
             let y2 = (posB.y / 100) * document.getElementById('tournament-visual').clientHeight;
             
             let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-            line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-            line.setAttribute('stroke', '#4a6d50');
-            line.setAttribute('stroke-width', '4');
-            line.setAttribute('stroke-dasharray', '5,5');
-            line.style.opacity = '0';
-            line.style.transition = 'opacity 0.3s';
+            line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+            line.setAttribute('stroke', '#4a6d50'); line.setAttribute('stroke-width', '4'); line.setAttribute('stroke-dasharray', '5,5');
+            line.style.opacity = '0'; line.style.transition = 'opacity 0.3s';
             linesSvg.appendChild(line);
             
             setTimeout(() => { line.style.opacity = '1'; }, 50);
             setTimeout(() => { line.style.opacity = '0'; }, 800);
 
-            // Обновляем счет
-            if(ev.sa > ev.sb) {
-                finalScores[ev.a] += 1;
-                document.getElementById('score-' + ev.a).innerText = finalScores[ev.a];
-            } else if(ev.sb > ev.sa) {
-                finalScores[ev.b] += 1;
-                document.getElementById('score-' + ev.b).innerText = finalScores[ev.b];
-            } else {
-                finalScores[ev.a] += 0.5; finalScores[ev.b] += 0.5;
-                document.getElementById('score-' + ev.a).innerText = finalScores[ev.a];
-                document.getElementById('score-' + ev.b).innerText = finalScores[ev.b];
-            }
+            if(ev.sa > ev.sb) { finalScores[ev.a] += 1; document.getElementById('score-' + ev.a).innerText = finalScores[ev.a]; }
+            else if(ev.sb > ev.sa) { finalScores[ev.b] += 1; document.getElementById('score-' + ev.b).innerText = finalScores[ev.b]; }
+            else { finalScores[ev.a] += 0.5; finalScores[ev.b] += 0.5; document.getElementById('score-' + ev.a).innerText = finalScores[ev.a]; document.getElementById('score-' + ev.b).innerText = finalScores[ev.b]; }
 
             currentEvent++;
             setTimeout(playNext, 1000);
         }
-        
         playNext();
     }
 
-    function showTournamentResult(betId, scores) {
+    function showTournamentResult(betId) {
         const resultBox = document.getElementById('final-result');
         resultBox.style.display = 'block';
-
-        let winner = 'tat';
-        let text = "";
-        if (betId === winner) {
-            text = "<h3 style='color:var(--green)'>🎉 Вы угадали победителя!</h3>";
-        } else {
-            text = "<h3 style='color:var(--red)'>😔 Вы не угадали.</h3>";
-        }
-
-        text += "<p><b>Победил Копир (Tit-for-Tat)!</b></p>";
-        text += "<p>В долгосрочной перспективе стратегия «Копир» показывает лучший результат. Она наказывает за предательство, но не скатывается в бесконечную войну. Это открытие сделал математик Роберт Аксельрод.</p>";
-        text += "<button class='btn-main' style='margin-top:20px;' onclick=\"location.reload()\">Пройти заново</button>";
-
+        let text = (betId === 'tat') ? "<h3 style='color:var(--green)'>🎉 Вы угадали победителя!</h3>" : "<h3 style='color:var(--red)'>😔 Вы не угадали.</h3>";
+        text += "<p><b>Победил Копир (Tit-for-Tat)!</b></p><p>В долгосрочной перспективе стратегия «Копир» показывает лучший результат. Она наказывает за предательство, но не скатывается в бесконечную войну.</p>";
+        text += "<button class='btn-main' style='margin-top:20px;' onclick=\"showScreen('screen-end'); spawnConfetti();\">Завершить</button>";
         resultBox.innerHTML = text;
+    }
+
+    // === 4. ФИНАЛЬНЫЙ ЭКРАН ===
+    function spawnConfetti() {
+        for(let i=0; i<50; i++) {
+            let c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.backgroundColor = ['#d4af37', '#4a6d50', '#c0392b', '#3498db'][Math.floor(Math.random()*4)];
+            c.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            c.style.animationDelay = Math.random() * 0.5 + 's';
+            document.body.appendChild(c);
+        }
     }
 </script>
 </body>
